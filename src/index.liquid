@@ -2,55 +2,55 @@
 layout: default
 
 # keep it short! shown in the header
-title: Demo of the Demo
+title: Subscription Management w/Stripe & Netlify
 
 # these are all optional and add links to the footer
-repo: learnwithjason/demo-base
-episode: https://www.learnwithjason.dev/creating-css-variable-font-text-effects
-tutorial: https://codepen.io/jlengstorf/pen/QWbdLjb
+repo: learnwithjason/stripe-jamstack-subscriptions
+episode: https://www.learnwithjason.dev/subscription-management-in-jamstack-apps
+tutorial:
 ---
 
-<!-- any HTML we want can go in here, including style and script tags -->
 <style>
-  .wrapper {
-    align-items: center;
-    display: flex;
-    height: 50vh;
-    justify-content: center;
-    min-height: 300px;
-    overflow: hidden;
+  h1 {
+    text-align: center;
   }
 
-  h2 {
-    color: #fff;
-    font-family: mallory, futura, arial black, sans-serif;
-    font-size: 22vw;
-    font-weight: 800;
-    letter-spacing: -0.1em;
-    line-height: 1.4;
-    padding: 0 0.25em;
-    text-shadow: 0.1vw 0.1vw #4f4f4f55, 0.1vw -0.1vw #4f4f4f55,
-      -0.1vw 0.1vw #4f4f4f55, -0.1vw -0.1vw #4f4f4f55;
+  .netlify-identity-menu {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    list-style: none;
+    padding: 0;
   }
 
-  @supports ((-webkit-background-clip: text) and (-webkit-text-stroke: 5vw)) {
-    h2 {
-      background: linear-gradient(160deg, #d459ab 0%, #ffdf37 50%, #a6fffa 90%);
-      -webkit-background-clip: text;
-      -webkit-text-stroke: 3.25vw transparent;
-    }
-  }
-
-  @media (min-width: 1000px) {
-    h2 {
-      font-size: 220px;
-      -webkit-text-stroke: 32.5px transparent;
-    }
+  .netlify-identity-item a {
+    background: var(--dark-gray);
+    border-radius: 0.5rem;
+    color: var(--white);
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 900;
+    padding: 1rem;
+    text-align: center;
+    text-decoration: none;
   }
 </style>
 
-<h1>This Is a Demo of the Demo</h1>
+<script
+  type="text/javascript"
+  src="https://identity.netlify.com/v1/netlify-identity-widget.js"
+></script>
 
-<div class="wrapper">
-  <h2 contenteditable spellcheck="false">boop.</h2>
-</div>
+<h1>Sign Up for Premium Corgi Content</h1>
+
+<div data-netlify-identity-menu></div>
+
+<script>
+  function checkAuthStatus(user) {
+    if (!user) return;
+
+    console.log({ user });
+  }
+
+  window.netlifyIdentity.on('init', checkAuthStatus);
+</script>
