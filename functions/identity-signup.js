@@ -10,7 +10,7 @@ exports.handler = async (event) => {
   // subscribe the new customer to the free plan
   await stripe.subscriptions.create({
     customer: customer.id,
-    items: [{ plan: '' }],
+    items: [{ price: 'price_1GvwMwDtqUvQwVOk2sn4ufjC' }],
   });
 
   // store the Netlify and Stripe IDs in Fauna
