@@ -38,7 +38,9 @@ exports.handler = async ({ body, headers }, context) => {
         },
         body: JSON.stringify({
           app_metadata: {
-            roles: [role],
+            authorization: {
+              roles: [role],
+            },
           },
         }),
       });

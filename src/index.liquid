@@ -15,7 +15,7 @@ tutorial:
     text-align: center;
   }
 
-  .netlify-identity-menu {
+  .user-info {
     align-items: center;
     display: grid;
     gap: 1rem;
@@ -24,11 +24,13 @@ tutorial:
     padding: 0;
   }
 
-  .netlify-identity-item a {
+  .user-info button {
     background: var(--dark-gray);
+    border: 0;
     border-radius: 0.5rem;
     color: var(--white);
     display: block;
+    font-family: var(--font-family);
     font-size: 1.5rem;
     font-weight: 900;
     padding: 1rem;
@@ -68,7 +70,7 @@ tutorial:
 
 <h1>Sign Up for Premium Corgi Content</h1>
 
-<div data-netlify-identity-menu></div>
+<div class="user-info"></div>
 
 <div class="corgi-content">
   <div class="content free">
@@ -105,16 +107,50 @@ tutorial:
 </template>
 
 <script>
+  const loadUserInfo = (user) => {
+    const container = document.querySelector('.user-info');
+    const message = document.createElement('div');
+    const button = document.createElement('button');
+
+    console.log({ user });
+
+    if (!user) {
+      message.innerText = 'Log in to see corgi content!';
+
+      button.innerText = 'Log In or Sign Up';
+      button.addEventListener('click', () => netlifyIdentity.open());
+    } else {
+      (message.innerText = `You are logged in as ${user.user_metadata.full_name}.`),
+        (button.innerText = 'Manage Your Subscription');
+      button.addEventListener('click', () => {
+        fetch('/.netlify/functions/create-manage-link', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${user.token.access_token}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((link) => {
+            window.location.href = link;
+          })
+          .catch((err) => console.error(err));
+      });
+    }
+
+    container.appendChild(message);
+    container.appendChild(button);
+  };
+
   const loadContent = (type, token) => {
-    fetch(`/.netlify/functions/get-${type}-content`, {
+    fetch(`/.netlify/functions/get-protected-content`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      body: JSON.stringify({ type }),
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log({ type, data });
         const template = document.querySelector('#content');
         const container = document.querySelector(`.content.${type}`);
 
@@ -137,14 +173,16 @@ tutorial:
   };
 
   let initialized = false;
-  async function initialize() {
+  async function initialize(user) {
     // make sure we only load content once
     if (initialized) return;
     initialized = true;
 
-    const token = await netlifyIdentity.refresh();
+    loadUserInfo(user);
 
-    console.log({ token });
+    if (!user) return;
+
+    const token = await netlifyIdentity.currentUser().jwt(true);
 
     loadContent('pro', token);
     loadContent('premium', token);
