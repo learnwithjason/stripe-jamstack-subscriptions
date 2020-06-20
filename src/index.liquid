@@ -16,6 +16,7 @@ tutorial:
   }
 
   .netlify-identity-menu {
+    align-items: center;
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(2, 1fr);
@@ -34,6 +35,30 @@ tutorial:
     text-align: center;
     text-decoration: none;
   }
+
+  .corgi-content {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .content h2 {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .content-display {
+    margin: 0;
+  }
+
+  .credit {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .content img {
+    width: 100%;
+  }
 </style>
 
 <script
@@ -45,12 +70,85 @@ tutorial:
 
 <div data-netlify-identity-menu></div>
 
-<script>
-  function checkAuthStatus(user) {
-    if (!user) return;
+<div class="corgi-content">
+  <div class="content free">
+    <h2>Free Content</h2>
+    <figure class="content-display">
+      <img
+        src="https://images.unsplash.com/photo-1550159930-40066082a4fc?auto=format&fit=crop&w=600&h=600&q=80"
+        alt="corgi in the park with a sunset in the background"
+      />
+      <figcaption>
+        This is free content. Everyone can see this!
+        <a class="credit" href="https://unsplash.com/photos/lkzjENdWgd8"
+          >Credit: Jacob Van Blarcom</a
+        >
+      </figcaption>
+    </figure>
+    <img />
+  </div>
+  <div class="content pro">
+    <h2>Pro Content</h2>
+  </div>
+  <div class="content premium">
+    <h2>Premium Content</h2>
+  </div>
+</div>
 
-    console.log({ user });
+<template id="content">
+  <figure class="content-display">
+    <img src="" alt="" />
+    <figcaption>
+      <a class="credit"></a>
+    </figcaption>
+  </figure>
+</template>
+
+<script>
+  const loadContent = (type, token) => {
+    fetch(`/.netlify/functions/get-${type}-content`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log({ type, data });
+        const template = document.querySelector('#content');
+        const container = document.querySelector(`.content.${type}`);
+
+        const content = template.content.cloneNode(true);
+
+        const img = content.querySelector('img');
+        img.src = data.src;
+        img.alt = data.alt;
+
+        const credit = content.querySelector('.credit');
+        credit.href = data.creditLink;
+        credit.innerText = `Credit: ${data.credit}`;
+
+        const caption = content.querySelector('figcaption');
+        caption.innerText = data.message;
+        caption.appendChild(credit);
+
+        container.appendChild(content);
+      });
+  };
+
+  let initialized = false;
+  async function initialize() {
+    // make sure we only load content once
+    if (initialized) return;
+    initialized = true;
+
+    const token = await netlifyIdentity.refresh();
+
+    console.log({ token });
+
+    loadContent('pro', token);
+    loadContent('premium', token);
   }
 
-  window.netlifyIdentity.on('init', checkAuthStatus);
+  window.netlifyIdentity.on('init', initialize);
 </script>
