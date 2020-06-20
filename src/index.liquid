@@ -180,9 +180,7 @@ tutorial:
 
     loadUserInfo(user);
 
-    if (!user) return;
-
-    const token = await netlifyIdentity.currentUser().jwt(true);
+    const token = user ? await netlifyIdentity.currentUser().jwt(true) : false;
 
     loadContent('pro', token);
     loadContent('premium', token);
