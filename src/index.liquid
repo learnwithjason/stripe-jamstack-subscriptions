@@ -75,19 +75,6 @@ tutorial:
 <div class="corgi-content">
   <div class="content free">
     <h2>Free Content</h2>
-    <figure class="content-display">
-      <img
-        src="https://images.unsplash.com/photo-1550159930-40066082a4fc?auto=format&fit=crop&w=600&h=600&q=80"
-        alt="corgi in the park with a sunset in the background"
-      />
-      <figcaption>
-        This is free content. Everyone can see this!
-        <a class="credit" href="https://unsplash.com/photos/lkzjENdWgd8"
-          >Credit: Jacob Van Blarcom</a
-        >
-      </figcaption>
-    </figure>
-    <img />
   </div>
   <div class="content pro">
     <h2>Pro Content</h2>
@@ -109,20 +96,26 @@ tutorial:
 <script>
   const loadUserInfo = (user) => {
     const container = document.querySelector('.user-info');
-    const message = document.createElement('div');
-    const button = document.createElement('button');
+    const button1 = document.createElement('button');
+    const button2 = document.createElement('button');
 
-    console.log({ user });
+    container.innerHTML = '';
 
     if (!user) {
-      message.innerText = 'Log in to see corgi content!';
+      button1.innerText = 'Log In';
+      button1.addEventListener('click', () => netlifyIdentity.open('login'));
 
-      button.innerText = 'Log In or Sign Up';
-      button.addEventListener('click', () => netlifyIdentity.open());
+      button2.innerText = 'Sign Up';
+      button2.addEventListener('click', () => netlifyIdentity.open('signup'));
     } else {
-      (message.innerText = `You are logged in as ${user.user_metadata.full_name}.`),
-        (button.innerText = 'Manage Your Subscription');
-      button.addEventListener('click', () => {
+      button1.innerText = 'Log Out';
+      button1.addEventListener('click', () => {
+        netlifyIdentity.logout();
+        location.reload();
+      });
+
+      button2.innerText = 'Manage Subscription';
+      button2.addEventListener('click', () => {
         fetch('/.netlify/functions/create-manage-link', {
           method: 'POST',
           headers: {
@@ -137,39 +130,49 @@ tutorial:
       });
     }
 
-    container.appendChild(message);
-    container.appendChild(button);
+    container.appendChild(button1);
+    container.appendChild(button2);
   };
 
-  const loadContent = (type, token) => {
-    fetch(`/.netlify/functions/get-protected-content`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ type }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        const template = document.querySelector('#content');
-        const container = document.querySelector(`.content.${type}`);
+  const loadContent = async (user) => {
+    const token = user ? await netlifyIdentity.currentUser().jwt(true) : false;
 
-        const content = template.content.cloneNode(true);
+    ['free', 'pro', 'premium'].forEach((type) => {
+      fetch(`/.netlify/functions/get-protected-content`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          const template = document.querySelector('#content');
+          const container = document.querySelector(`.content.${type}`);
 
-        const img = content.querySelector('img');
-        img.src = data.src;
-        img.alt = data.alt;
+          // empty the node
+          const oldContent = container.querySelector('.content-display');
+          if (oldContent) {
+            container.removeChild(oldContent);
+          }
 
-        const credit = content.querySelector('.credit');
-        credit.href = data.creditLink;
-        credit.innerText = `Credit: ${data.credit}`;
+          const content = template.content.cloneNode(true);
 
-        const caption = content.querySelector('figcaption');
-        caption.innerText = data.message;
-        caption.appendChild(credit);
+          const img = content.querySelector('img');
+          img.src = data.src;
+          img.alt = data.alt;
 
-        container.appendChild(content);
-      });
+          const credit = content.querySelector('.credit');
+          credit.href = data.creditLink;
+          credit.innerText = `Credit: ${data.credit}`;
+
+          const caption = content.querySelector('figcaption');
+          caption.innerText = data.message;
+          caption.appendChild(credit);
+
+          container.appendChild(content);
+        });
+    });
   };
 
   let initialized = false;
@@ -179,12 +182,16 @@ tutorial:
     initialized = true;
 
     loadUserInfo(user);
-
-    const token = user ? await netlifyIdentity.currentUser().jwt(true) : false;
-
-    loadContent('pro', token);
-    loadContent('premium', token);
+    loadContent(user);
   }
 
   window.netlifyIdentity.on('init', initialize);
+  window.netlifyIdentity.on('login', (user) => {
+    loadUserInfo(user);
+    loadContent(user);
+  });
+  window.netlifyIdentity.on('logout', (user) => {
+    loadUserInfo(user);
+    loadContent(user);
+  });
 </script>

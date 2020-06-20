@@ -1,4 +1,13 @@
 const content = {
+  free: {
+    src:
+      'https://images.unsplash.com/photo-1550159930-40066082a4fc?auto=format&fit=crop&w=600&h=600&q=80',
+    alt: 'corgi in the park with a sunset in the background',
+    credit: 'Jacob Van Blarcom',
+    creditLink: 'https://unsplash.com/photos/lkzjENdWgd8',
+    message: 'To view this content, you need to create an account!',
+    allowedRoles: ['sub:free', 'sub:pro', 'sub:premium'],
+  },
   pro: {
     src:
       'https://images.unsplash.com/photo-1519098901909-b1553a1190af?auto=format&fit=crop&w=600&h=600&q=80',
@@ -6,7 +15,8 @@ const content = {
     credit: 'Florencia Potter',
     creditLink: 'https://unsplash.com/photos/yxmNWxi3wCo',
     message:
-      'This is protected content! It’s only available if you have the pro plan or higher.',
+      'This is protected content! It’s only available if you have a pro plan or higher.',
+    allowedRoles: ['sub:pro', 'sub:premium'],
   },
   premium: {
     src:
@@ -16,6 +26,7 @@ const content = {
     creditLink: 'https://unsplash.com/photos/cX-KEISwDIw',
     message:
       'This is protected content! It’s only available if you have the premium plan.',
+    allowedRoles: ['sub:premium'],
   },
 };
 
@@ -23,8 +34,9 @@ exports.handler = async (event, context) => {
   const { type } = JSON.parse(event.body);
   const { user } = context.clientContext;
   const roles = user ? user.app_metadata.roles : false;
+  const { allowedRoles } = content[type];
 
-  if (!roles || !roles.includes(`sub:${type}`)) {
+  if (!roles || !roles.some((role) => allowedRoles.includes(role))) {
     return {
       statusCode: 402,
       body: JSON.stringify({
@@ -33,7 +45,7 @@ exports.handler = async (event, context) => {
         alt: 'corgi in a crossed circle with the text “subscription required”',
         credit: 'Jason Lengstorf',
         creditLink: 'https://dribbble.com/jlengstorf',
-        message: 'This content requires a premium subscription.',
+        message: `This content requires a ${type} subscription.`,
       }),
     };
   }
