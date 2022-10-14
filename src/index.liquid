@@ -137,6 +137,13 @@ tutorial:
   const loadContent = async (user) => {
     const token = user ? await netlifyIdentity.currentUser().jwt(true) : false;
 
+    fetch('/.netlify/functions/set-cookie', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    })
+      .then((res) => res.json())
+      .then((res) => console.log({ res }));
+
     ['free', 'pro', 'premium'].forEach((type) => {
       fetch(`/.netlify/functions/get-protected-content`, {
         method: 'POST',
